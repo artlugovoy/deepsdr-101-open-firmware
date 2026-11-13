@@ -691,6 +691,9 @@ static uint16_t ficha(void)
     rect(24U, (uint16_t)(y + 6U), 752U, 1U, SUAVE);
     y = (uint16_t)(y + ALTO_LIN - 5U);
 
+#ifndef CHIP_APM32F407
+    /* El APM32 no tiene zona sin esperas: toda su flash va a 4 estados con
+     * cache (rama apm32), asi que este aviso del GD32 no le aplica. */
     if (s_flash_kb > 512U) {
         texto(24U, y, "AVISO: mas de 512 kB de flash; parte de la aplicacion",
               AMBAR);
@@ -698,6 +701,7 @@ static uint16_t ficha(void)
         texto(24U, y, "puede caer fuera de la zona sin esperas.", AMBAR);
         y = (uint16_t)(y + ALTO_LIN - 5U);
     }
+#endif
 
     y = (uint16_t)(y + 10U);
     return (y < 296U) ? 296U : y;
