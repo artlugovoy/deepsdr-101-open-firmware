@@ -65,10 +65,11 @@
                                   TCMRAM_BSS comment) to make room for this
                                   buffer's own ~18KB main-RAM growth. */
 #ifdef CHIP_APM32F407
-/* APM32 (rama apm32, 13/11/2026): 40 filas de historia, eleccion del usuario
- * para que quepa en 128 kB de SRAM. El hueco de pantalla sigue siendo el de
- * siempre (WF_AREA_H): la cascada pinta arriba y lo de debajo queda negro. */
-#define WATERFALL_ROWS   40
+/* APM32 (rama apm32, 13/11/2026): 30 filas de historia, eleccion del usuario
+ * para que quepa en 128 kB de SRAM (con 40 sobraban 9,4 kB y lo demas ya
+ * era trabajo de verdad). El hueco de pantalla sigue siendo el de siempre
+ * (WF_AREA_H): la cascada pinta arriba y lo de debajo queda negro. */
+#define WATERFALL_ROWS   30
 #else
 #define WATERFALL_ROWS   72    /* filas visibles simultaneamente, ver presupuesto de RAM arriba
                                   (756*72*1 = 54.432 B: un byte por pixel, indice de paleta.

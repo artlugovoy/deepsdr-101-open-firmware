@@ -58,7 +58,17 @@
  * ventanas es exactamente donde se cuela el fallo que corrompe el
  * volumen por donde entra el firmware.
  */
+#ifdef CHIP_APM32F407
+/* APM32 (rama apm32, 13/11/2026): 3.584. El disco de esta radio es 1 MB
+ * del W25Q16, y la FAT12 mas grande que cabe ahi (clusters de 512) son
+ * (2048+2)*3/2 = 3.075 bytes; el volumen de fabrica, 2000 clusters, usa
+ * 3.003. Un chip mas grande formateado con mas clusters se rechaza con
+ * GEO_FAT_GRANDE (ver geo_lee), que es el fallo seguro. Ahorra 2,5 kB de
+ * los 128 de SRAM del APM32. */
+#define FAT_BYTES_MAX       3584U
+#else
 #define FAT_BYTES_MAX       6144U
+#endif
 
 /*
  * FORCED -O0, same uncalibrated-NOP-loop reasoning as i2c_bitbang.c's
