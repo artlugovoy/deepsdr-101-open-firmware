@@ -1,3 +1,5 @@
+> **APM32F407 radios (unofficial fork):** this branch adds a build for DeepSDR 101 radios with a Geehy APM32F407 chip (ROM DFU `314b:0106`). Start with **[README_APM32.md](README_APM32.md)** — install steps, what is different, status. Downloads on the [Releases](../../releases) page. Upstream: [gmtii/deepsdr-101-open-firmware](https://github.com/gmtii/deepsdr-101-open-firmware).
+
 # DEEPSDR 101 — firmware abierto
 
 > ### *In memory of Carlos EB4DYL*
