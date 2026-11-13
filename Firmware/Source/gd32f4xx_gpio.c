@@ -217,7 +217,14 @@ void gpio_bit_set(uint32_t gpio_periph, uint32_t pin)
 */
 void gpio_bit_reset(uint32_t gpio_periph, uint32_t pin)
 {
+#ifdef CHIP_APM32F407
+    /* APM32F407/STM32F407: no hay GPIO_BC (+0x28). Se baja el pin con la
+     * mitad alta de BOP (BSRR). Rama apm32, 13/11/2026: sin esto ningun
+     * pin bajaba nunca, ni el CS de la flash SPI. */
+    GPIO_BOP(gpio_periph) = (uint32_t)pin << 16;
+#else
     GPIO_BC(gpio_periph) = (uint32_t)pin;
+#endif
 }
 
 /*!
@@ -239,7 +246,11 @@ void gpio_bit_write(uint32_t gpio_periph, uint32_t pin, bit_status bit_value)
     if(RESET != bit_value) {
         GPIO_BOP(gpio_periph) = (uint32_t)pin;
     } else {
+#ifdef CHIP_APM32F407
+        GPIO_BOP(gpio_periph) = (uint32_t)pin << 16;   /* sin GPIO_BC */
+#else
         GPIO_BC(gpio_periph) = (uint32_t)pin;
+#endif
     }
 }
 
@@ -416,7 +427,14 @@ void gpio_pin_lock(uint32_t gpio_periph, uint32_t pin)
 */
 void gpio_bit_toggle(uint32_t gpio_periph, uint32_t pin)
 {
+#ifdef CHIP_APM32F407
+    /* Sin GPIO_TG (+0x2C): los que estan a 1 se bajan y los demas se suben,
+     * en una sola escritura a BOP (BSRR). */
+    uint32_t alto = GPIO_OCTL(gpio_periph) & pin;
+    GPIO_BOP(gpio_periph) = (alto << 16) | (pin & ~alto);
+#else
     GPIO_TG(gpio_periph) = (uint32_t)pin;
+#endif
 }
 
 /*!
@@ -430,5 +448,9 @@ void gpio_bit_toggle(uint32_t gpio_periph, uint32_t pin)
 */
 void gpio_port_toggle(uint32_t gpio_periph)
 {
+#ifdef CHIP_APM32F407
+    gpio_bit_toggle(gpio_periph, 0x0000FFFFU);   /* sin GPIO_TG */
+#else
     GPIO_TG(gpio_periph) = 0x0000FFFFU;
+#endif
 }
