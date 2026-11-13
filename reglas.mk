@@ -440,6 +440,7 @@ apm32:
 	         --tope=1015808 --clave=" APM32"
 	@python3 tools/comprueba_update.py update_apm32.bin
 	@python3 tools/ram_mapa.py build_apm32/firmware_apm32.map
+	@python3 tools/ram_tope.py build_apm32/firmware_apm32.map 129024   # 126 kB: presupuesto del APM32
 
 .PHONY: dos
 dos:
