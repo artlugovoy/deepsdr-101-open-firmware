@@ -455,7 +455,7 @@ update470:
 .PHONY: apm32
 apm32:
 	@$(MAKE) BUILD_DIR=build_apm32 TARGET=firmware_apm32 \
-	         LDSCRIPT=APM32F407VG_FLASH.ld DEFS_EXTRA=-DCHIP_APM32F407
+	         LDSCRIPT=APM32F407VG_FLASH.ld DEFS_EXTRA="-DCHIP_APM32F407 -DGFX2_BAND_H=4"
 	@python3 tools/cabecera.py build_apm32/firmware_apm32.bin update_apm32.bin \
 	         --tope=1015808 --clave=" APM32"
 	@python3 tools/comprueba_update.py update_apm32.bin
