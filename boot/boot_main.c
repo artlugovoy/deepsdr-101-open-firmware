@@ -1387,9 +1387,15 @@ int main(void)
      * corrido cuando llegamos aqui. Por eso se pone HIGH y se espera a la
      * bandera, en vez de darlo por hecho.
      */
+#ifndef CHIP_APM32F407
+    /* En el APM32 SystemInit() ya puso la escala de tension ANTES de
+     * encender el PLL, que es cuando el STM32F407/APM32 deja cambiarla.
+     * Repetirlo aqui, ya a 144 MHz, la bajaria un instante a la escala 2
+     * (tope 144 MHz) al limpiar los bits antes de ponerlos. */
     rcu_periph_clock_enable(RCU_PMU);
     pmu_ldo_output_select(PMU_LDOVS_HIGH);
     { uint32_t t; for (t = 0U; t < 100000U; t++) { __NOP(); } }
+#endif
 
     pines_de_la_placa();
 

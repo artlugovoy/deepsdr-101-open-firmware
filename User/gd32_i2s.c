@@ -58,6 +58,11 @@ _Static_assert((12288000UL / 8UL) * I2S_PLL_N <= 432000000UL,
 #endif
 _Static_assert(MCLK_TIMER_CLK_HZ % 1536000UL == 0UL,
                "el divisor del MCLK tiene que ser entero");
+/* Pulso del MCLK: la mitad del periodo (65 de 130 en el GD32, 47 de 94 en
+ * el APM32). Era un 65 literal: en el APM32 habria salido al 69 %. */
+#define MCLK_PULSE  ((MCLK_TIMER_CLK_HZ / 1536000UL) / 2UL)
+_Static_assert(MCLK_PULSE * 2UL == MCLK_TIMER_CLK_HZ / 1536000UL,
+               "el MCLK tiene que salir al 50 %: pulso = la mitad del periodo");
 _Static_assert((12288000UL / 8UL) * I2S_PLL_N / I2S_PLL_R == 153600000UL,
                "PLLI2S: el i2sclock tiene que ser 153,6 MHz en los dos chips");
 
@@ -473,7 +478,7 @@ void gd32_i2s_mclk_timer_start(void)
     oc_init_struct.ocpolarity   = TIMER_OC_POLARITY_HIGH;
     timer_channel_output_config(TIMER7, TIMER_CH_0, &oc_init_struct);
 
-    timer_channel_output_pulse_value_config(TIMER7, TIMER_CH_0, 65U); /* exact 50% duty */
+    timer_channel_output_pulse_value_config(TIMER7, TIMER_CH_0, (uint16_t)MCLK_PULSE); /* exact 50% duty */
     timer_channel_output_mode_config(TIMER7, TIMER_CH_0, TIMER_OC_MODE_PWM0);
 
     /* TIMER7 is an advanced-control timer (like TIMER0) - its outputs
