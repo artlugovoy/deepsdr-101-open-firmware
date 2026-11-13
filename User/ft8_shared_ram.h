@@ -88,7 +88,7 @@
  */
 #ifdef CHIP_APM32F407
 /* APM32 (rama apm32, 13/11/2026): FT8 y HFDL no estan en su build, asi que
- * la union es solo la cascada: 40 x 756 = 30.240 bytes. Lo que se presta
+ * la union es solo la cascada: 30 x 756 = 22.680 bytes. Lo que se presta
  * por hfdl_ram_todo() a SSTV, WEFAX, AIS... es esto; ver hfdl_ram.c. */
 typedef union
 {
