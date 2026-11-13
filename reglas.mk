@@ -238,6 +238,26 @@ LDFLAGS  = $(MCUFLAGS) -specs=nano.specs -specs=nosys.specs -T$(LDSCRIPT) \
 #
 DEFS += $(DEFS_EXTRA)
 
+#
+# EL APM32 SIN LOS MODOS QUE NO CABEN - 13/11/2026 (rama apm32).
+#
+# FT8, HFDL, WSPR, JTTY y STANAG/S4415 piden entre 38 y 73 kB del buffer
+# compartido, y el APM32 tiene 128 kB de SRAM en total: fuera de su build.
+# Lo que el resto del firmware les llama lo contesta User/apm32_sin_modos.c
+# ("no activo", "no arranca"). Se quedan:
+#   User/ft8_decoder.c  por el localizador propio (la cuadricula Maidenhead)
+#   User/hfdl_ram.c     porque presta el buffer a SSTV, WEFAX, AIS, DSC...
+# Ver docs/superpowers/plans/2026-11-13-apm32-part2-ram-fit.md, tarea 2.
+#
+APM32_FUERA = $(filter-out User/ft8_decoder.c User/hfdl_ram.c, \
+                $(wildcard User/ft8_*.c User/hfdl_*.c User/wspr_*.c \
+                           User/jtty_*.c User/stanag_*.c User/s4415.c))
+ifneq ($(findstring CHIP_APM32F407,$(DEFS_EXTRA)),)
+C_SOURCES := $(filter-out $(APM32_FUERA),$(C_SOURCES))
+else
+C_SOURCES := $(filter-out User/apm32_sin_modos.c,$(C_SOURCES))
+endif
+
 CFLAGS  = $(MCUFLAGS) $(DEFS) $(INCLUDES) -Wall -O2 -g3 -ffunction-sections -fdata-sections -fno-common
 ASFLAGS = $(MCUFLAGS) -g3
 
