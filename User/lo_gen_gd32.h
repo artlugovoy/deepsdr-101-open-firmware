@@ -20,7 +20,13 @@
  * PCLK1 = 99,84 MHz. En modo conmutacion el periodo de SALIDA son DOS
  * periodos del contador, de ahi el 2.
  */
+#ifdef CHIP_APM32F407
+/* APM32 (rama apm32): 144,384 MHz, APB1/4 -> PCLK1 36,096 -> x2 = 72,192 MHz.
+ * El generador solo se usa por debajo de 300 kHz: sobra. */
+#define LO_GEN_TIMER_CLK_HZ 72192000UL
+#else
 #define LO_GEN_TIMER_CLK_HZ 99840000UL
+#endif
 #define LO_GEN_CUENTAS_MAX  65536UL   /* ARR es de 16 bits: ARR+1 <= 65536 */
 
 /* Lo que sale de verdad con un periodo de `cuentas` cuentas de contador. */

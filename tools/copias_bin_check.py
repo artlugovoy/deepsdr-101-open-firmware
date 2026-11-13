@@ -95,6 +95,8 @@ RAIZ   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAREJAS = (
     ("customboot.bin",     os.path.join(RAIZ, "boot", "customboot.bin")),
     ("customboot_470.bin", os.path.join(RAIZ, "boot", "customboot_470.bin")),
+    # rama apm32, 13/11/2026: make -C boot apm32
+    ("customboot_apm32.bin", os.path.join(RAIZ, "boot", "customboot_apm32.bin")),
 )
 BUENO  = PAREJAS[0][1]
 NOMBRE = PAREJAS[0][0]

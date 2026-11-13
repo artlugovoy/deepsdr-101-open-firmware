@@ -31,7 +31,11 @@
 /* La SRAM principal. El DMA es un maestro del bus AHB y NO ve el TCM
  * (0x10000000), igual que el IPA - ver ipa_blit.c. */
 #define SRAM_INI  0x20000000UL
+#ifdef CHIP_APM32F407
+#define SRAM_FIN  0x20020000UL   /* APM32F407: 128 kB */
+#else
 #define SRAM_FIN  0x20030000UL
+#endif
 
 static uint8_t  s_vale;      /* la autoprueba salio bien */
 static uint8_t  s_on;        /* encendido por el usuario */

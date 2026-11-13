@@ -32,6 +32,35 @@
  */
 #define DMA_CHEN_VUELTAS  100000UL
 
+/*
+ * RELOJES QUE DEPENDEN DEL CHIP - 13/11/2026 (rama apm32).
+ *
+ * MCLK del codec: TIMER7 (APB2) dividido hasta 1,536 MHz. El divisor tiene
+ * que ser entero o el MCLK sale con error.
+ *   GD32F450  APB2 timer = 199,68 MHz  -> 130
+ *   APM32F407 APB2 timer = 144,384 MHz ->  94
+ *
+ * PLLI2S: entrada 12,288/8 = 1,536 MHz. El GD32 usa N=400 R=4 -> VCO 614,4
+ * y 153,6 MHz de i2sclock (no 49,152 como decia el comentario de abajo: la
+ * cuenta 1,536 x 400 / 4 da 153,6). El APM32 no pasa de 432 MHz de VCO, asi
+ * que N=200 R=2: VCO 307,2 y el MISMO i2sclock de 153,6 MHz.
+ */
+#ifdef CHIP_APM32F407
+#define MCLK_TIMER_CLK_HZ  144384000UL
+#define I2S_PLL_N          200U
+#define I2S_PLL_R          2U
+_Static_assert((12288000UL / 8UL) * I2S_PLL_N <= 432000000UL,
+               "PLLI2S: VCO por encima de 432 MHz en el APM32");
+#else
+#define MCLK_TIMER_CLK_HZ  199680000UL
+#define I2S_PLL_N          400U
+#define I2S_PLL_R          4U
+#endif
+_Static_assert(MCLK_TIMER_CLK_HZ % 1536000UL == 0UL,
+               "el divisor del MCLK tiene que ser entero");
+_Static_assert((12288000UL / 8UL) * I2S_PLL_N / I2S_PLL_R == 153600000UL,
+               "PLLI2S: el i2sclock tiene que ser 153,6 MHz en los dos chips");
+
 static void espera_chen(const char *quien)
 {
     uint32_t guard = DMA_CHEN_VUELTAS;
@@ -162,15 +191,17 @@ void gd32_i2s_init_slave(aic3204_rate_t rate)
      * be recalculated together with it to keep the same i2sclock -
      * they are not independent.
      *
-     * Current values (PSC=8 in system_gd32f4xx.c, N=400/R=4 here):
-     * i2sclock = (12.288MHz/8) * 400/4 = 49.152MHz exactly. This does
+     * Current values (PSC=8 in system_gd32f4xx.c, I2S_PLL_N/I2S_PLL_R
+     * here): i2sclock = (12.288MHz/8) * 400/4 = 153.6MHz on the GD32
+     * (this line used to say 49.152MHz - an arithmetic slip), and
+     * 200/2 = the same 153.6MHz on the APM32 (see top of file). This does
      * NOT depend on `rate` - i2sclock feeds I2S_AUDIOSAMPLE_48K/192K's
      * OWN internal divider math below, so the same PLLI2S setting
      * covers both rates.
      */
     rcu_osci_off(RCU_PLLI2S_CK);
-    if (rcu_plli2s_config(400U, 4U) != SUCCESS) {
-        debug_print("gd32_i2s: rcu_plli2s_config(400,4) FAILED\n");
+    if (rcu_plli2s_config(I2S_PLL_N, I2S_PLL_R) != SUCCESS) {
+        debug_print("gd32_i2s: rcu_plli2s_config FAILED\n");
     }
     rcu_osci_on(RCU_PLLI2S_CK);
     if (rcu_osci_stab_wait(RCU_PLLI2S_CK) != SUCCESS) {
@@ -433,7 +464,7 @@ void gd32_i2s_mclk_timer_start(void)
     timer_init_struct.alignedmode       = TIMER_COUNTER_EDGE;
     timer_init_struct.counterdirection  = TIMER_COUNTER_UP;
     timer_init_struct.clockdivision     = TIMER_CKDIV_DIV1;
-    timer_init_struct.period            = 129U; /* 130 counts: 199.68MHz/130 = 1.536MHz exact */
+    timer_init_struct.period            = (uint32_t)(MCLK_TIMER_CLK_HZ / 1536000UL) - 1U; /* 1.536MHz exact: 130 counts GD32, 94 APM32 */
     timer_init_struct.repetitioncounter = 0U;
     gd32_timer_init(TIMER7, &timer_init_struct);
 
