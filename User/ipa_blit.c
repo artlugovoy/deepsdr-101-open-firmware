@@ -17,8 +17,10 @@
  * apagada respecto al camino de la CPU - una diferencia pequena, constante
  * y dificil de ver, que es la peor clase.
  */
+#ifndef CHIP_APM32F407   /* APM32: sin IPA, la tabla no se usa nunca */
 static uint32_t s_lut[256];
 static uint32_t s_lut_firma;
+#endif
 /* El puntero de la ultima paleta cargada y cuantas llamadas seguidas se
  * puede saltar la firma. Ver lut_pon(). */
 #define LUT_SALTOS 8U
@@ -46,6 +48,7 @@ static uint8_t en_sram(const void *p, uint32_t bytes)
     return (uint8_t)((a >= SRAM_INI) && ((a + bytes) <= SRAM_FIN));
 }
 
+#ifndef CHIP_APM32F407   /* solo la usa lut_pon() con IPA */
 static uint32_t firma(const uint16_t *cmap)
 {
     uint32_t h = 2166136261UL;   /* FNV-1a, que para 256 entradas sobra */
@@ -57,6 +60,7 @@ static uint32_t firma(const uint16_t *cmap)
     }
     return h;
 }
+#endif
 
 void ipa_blit_init(void)
 {
@@ -99,6 +103,12 @@ uint16_t ipa_blit_fallos(void)
 /* Carga la paleta en el IPA si ha cambiado. Devuelve 0 si no se pudo. */
 static uint8_t lut_pon(const uint16_t *cmap)
 {
+#ifdef CHIP_APM32F407
+    /* Inalcanzable: ipa_blit_l8() sale antes si !s_vale, y en el APM32
+     * s_vale es siempre 0 (ver ipa_blit_init). */
+    (void)cmap;
+    return 0U;
+#else
     uint32_t f;
     uint32_t vueltas;
     uint16_t i;
@@ -168,6 +178,7 @@ static uint8_t lut_pon(const uint16_t *cmap)
         }
     }
     return 0U;
+#endif /* CHIP_APM32F407 */
 }
 
 uint8_t ipa_blit_l8(const uint8_t *src, uint16_t src_salto,
