@@ -169,6 +169,7 @@ bool ft8_decoder_grid_e4(const char *grid, int len,
  * handful of times per 15s slot), nowhere near hot enough to need
  * anything faster than plain libm sinf/cosf/atan2f/sqrtf (already
  * linked into this project - see the Makefile's "-lm"). */
+#ifndef CHIP_APM32F407   /* solo la usa el decodificador */
 static float haversine_km(float lat1, float lon1, float lat2, float lon2)
 {
     const float deg2rad = 3.14159265358979323846f / 180.0f;
@@ -190,6 +191,14 @@ static float haversine_km(float lat1, float lon1, float lat2, float lon2)
     c = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
     return earth_radius_km * c;
 }
+#endif
+
+#ifndef CHIP_APM32F407
+/* APM32 (rama apm32, 13/11/2026): de aqui hasta el #endif, y desde
+ * queue_push() hasta el final, es el DECODIFICADOR, que en el APM32 no
+ * entra (no cabe en 128 kB de SRAM; ver APM32_FUERA en reglas.mk). Lo de en
+ * medio es el LOCALIZADOR propio -la cuadricula Maidenhead-, que si se queda
+ * porque lo usan los mapas y los ajustes. */
 
 /* El mismo tapon de "nunca acierta" que llevaba el banco de WAV del
  * ordenador - ver la cabecera de ft8_decoder_process_slot() para el por
@@ -214,6 +223,7 @@ static void hash_save_stub(const char *callsign, uint32_t n22)
 _Static_assert(sizeof(g_ft8_shared_ram.ft8.cola)
                >= FT8_DECODER_MSG_QUEUE_SIZE * sizeof(ft8_decoded_msg_t),
                "cola[] de ft8_shared_ram.h se ha quedado corta para s_queue[]");
+#endif /* CHIP_APM32F407 */
 static uint8_t s_queue_head; /* next slot to write */
 static uint8_t s_queue_tail; /* next slot to read */
 static uint8_t s_queue_count;
@@ -346,6 +356,7 @@ void ft8_decoder_grid_por_defecto(void)
                              (int)(sizeof(FT8_GRID_POR_DEFECTO) - 1U));
 }
 
+#ifndef CHIP_APM32F407   /* el decodificador, hasta el final: ver arriba */
 static void queue_push(const char *line)
 {
     uint8_t i;
@@ -952,3 +963,4 @@ void ft8_decoder_process_slot(void)
     ft8_decoder_slot_empieza();
     while (ft8_decoder_slot_paso()) { }
 }
+#endif /* CHIP_APM32F407 */

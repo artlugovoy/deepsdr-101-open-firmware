@@ -578,3 +578,10 @@ update4: update
 # Makefile -son codigo que se ejecuta- pero si un .mk: asi cambiar las
 # opciones no obliga a renombrar nada a mano cada vez.
 -include avisos.mk
+
+# APM32 (rama apm32, 13/11/2026): la biblioteca de FT8 la mete avisos.mk,
+# que se lee aqui, despues del filtro APM32_FUERA de arriba. Sin el
+# decodificador de FT8 no la usa nadie; ver ese filtro.
+ifneq ($(findstring CHIP_APM32F407,$(DEFS_EXTRA)),)
+C_SOURCES := $(filter-out Ft8Lib/ft8/%.c,$(C_SOURCES))
+endif

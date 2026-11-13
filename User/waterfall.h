@@ -64,11 +64,22 @@
                                   working buffers into TCM RAM (see fft.c's
                                   TCMRAM_BSS comment) to make room for this
                                   buffer's own ~18KB main-RAM growth. */
+#ifdef CHIP_APM32F407
+/* APM32 (rama apm32, 13/11/2026): 40 filas de historia, eleccion del usuario
+ * para que quepa en 128 kB de SRAM. El hueco de pantalla sigue siendo el de
+ * siempre (WF_AREA_H): la cascada pinta arriba y lo de debajo queda negro. */
+#define WATERFALL_ROWS   40
+#else
 #define WATERFALL_ROWS   72    /* filas visibles simultaneamente, ver presupuesto de RAM arriba
                                   (756*72*1 = 54.432 B: un byte por pixel, indice de paleta.
                                    Aqui ponia 672*72*2 = ~97KB, que es la cuenta
                                    de cuando llevaba 16 bits por pixel y 672 de
                                    ancho. Corregido el 27/10/2026.) */
+#endif
+/* Alto del hueco de la cascada en PANTALLA, del que cuelgan el menu, el
+ * panel de texto de RTTY y el de FAX. En el GD32 coincide con WATERFALL_ROWS;
+ * en el APM32 la historia es mas corta pero la maqueta no se mueve. */
+#define WF_AREA_H        72
 
 /* Reserva el buffer (en .bss, RAM principal) y lo pone a negro. Llamar
  * una vez al arrancar, antes del primer waterfall_push_line(). */
