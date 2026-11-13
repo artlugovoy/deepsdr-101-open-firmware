@@ -67,7 +67,10 @@ OFF_CABECERA = 0x200
 # version de este comprobador solo aceptaba 0x2000xxxx y daba por malo un
 # binario perfecto. Un comprobador que da falsos positivos es peor que no
 # tenerlo: manda a buscar el fallo donde no esta.
-FLASH_APP_INI, FLASH_FIN = 0x0800C000, 0x08080000   # la region de la app
+# 0x08008000 desde el 17/10 (CARGA_APP_BASE); aqui seguia el 0x0800C000 de
+# antes. Visto en la rama apm32 (13/11/2026) con una imagen pequeña cuyo
+# reset cae entre los dos.
+FLASH_APP_INI, FLASH_FIN = 0x08008000, 0x08080000   # la region de la app
 SRAM_INI,  SRAM_FIN  = 0x20000000, 0x20030000       # 192 kB principales
 CCM_INI,   CCM_FIN   = 0x10000000, 0x10010000       # 64 kB, donde va la pila
 
