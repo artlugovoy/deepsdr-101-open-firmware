@@ -1007,6 +1007,37 @@ static void system_clock_200m_8m_hxtal(void)
     \param[out] none
     \retval     none
 */
+#ifdef CHIP_APM32F407
+/*
+ * EL RELOJ DEL APM32F407 - 13/11/2026 (rama apm32).
+ *
+ * El de fabrica de ESTA radio, leido de su cargador Y de su aplicacion
+ * (las dos lo usan igual): cristal 12,288 MHz, PLL 8/188/2/6 -> 144,384 MHz
+ * de sistema y 48,128 MHz de USB (+0,27 %, funciona). 4 estados de espera
+ * de flash con prefetch y las dos caches, como su HAL_Init().
+ *
+ * El APM32 no tiene el "high-drive" del GD32 (PMU_CTL_HDEN/HDS): esperar
+ * a sus banderas se colgaria para siempre. Y SI necesita estados de
+ * espera: a 0 (lo que deja el camino del GD32) se cuelga al primer fetch.
+ */
+#define APM32_PLL_M     8U
+#define APM32_PLL_N     188U
+#define APM32_PLL_P     2U
+#define APM32_PLL_Q     6U
+#define APM32_FLASH_WS  4U
+/* FMC_WS es el FLASH_ACR del STM32/APM32: latencia en 0..3, prefetch en el
+ * bit 8, cache de instrucciones en el 9 y de datos en el 10. */
+#define APM32_FMC_PRFTEN  (1UL << 8)
+#define APM32_FMC_ICEN    (1UL << 9)
+#define APM32_FMC_DCEN    (1UL << 10)
+_Static_assert((HXTAL_VALUE / APM32_PLL_M) * APM32_PLL_N / APM32_PLL_P == 144384000UL,
+               "APM32: el sistema tiene que salir a 144,384 MHz");
+_Static_assert((HXTAL_VALUE / APM32_PLL_M) * APM32_PLL_N <= 432000000UL,
+               "APM32: el VCO del PLL se sale de su limite de 432 MHz");
+_Static_assert((HXTAL_VALUE / APM32_PLL_M) * APM32_PLL_N / APM32_PLL_Q == 48128000UL,
+               "APM32: el USB tiene que salir a 48,128 MHz, como en fabrica");
+#endif /* CHIP_APM32F407 */
+
 static void system_clock_200m_25m_hxtal(void)
 {
     uint32_t timeout = 0U;
@@ -1058,7 +1089,13 @@ static void system_clock_200m_25m_hxtal(void)
      * STM32F4 parts), and WSCNT=0 is exactly the reset value already
      * in use.
      */
-#ifdef CARGADOR_ARRANQUE
+#if defined(CHIP_APM32F407)
+    /* App y cargador al mismo reloj: el de fabrica de esta radio. Los
+     * estados de espera se ponen ANTES de cambiar al PLL, mas abajo. */
+    RCU_PLL = (APM32_PLL_M | (APM32_PLL_N << 6U) | (((APM32_PLL_P >> 1U) - 1U) << 16U) |
+                   (RCU_PLLSRC_HXTAL) | (APM32_PLL_Q << 24U));
+    SystemCoreClock = 144384000U;
+#elif defined(CARGADOR_ARRANQUE)
     /*
      * EL CARGADOR VA A 192 MHz, NO A 199,68, Y ES POR EL USB - 01/10/2026.
      *
@@ -1129,6 +1166,14 @@ static void system_clock_200m_25m_hxtal(void)
     while(0U == (RCU_CTL & RCU_CTL_PLLSTB)){
     }
     
+#ifdef CHIP_APM32F407
+    /* Estados de espera ANTES de subir el reloj, y comprobados: si el
+     * cambio no ha llegado al registro, el primer fetch a 144 MHz falla. */
+    FMC_WS = (FMC_WS & ~0x0FUL) | APM32_FLASH_WS
+           | APM32_FMC_PRFTEN | APM32_FMC_ICEN | APM32_FMC_DCEN;
+    while ((FMC_WS & 0x0FUL) != APM32_FLASH_WS) {
+    }
+#else
     /* Enable the high-drive to extend the clock frequency to 200 Mhz */
     PMU_CTL |= PMU_CTL_HDEN;
     while(0U == (PMU_CS & PMU_CS_HDRF)){
@@ -1138,6 +1183,7 @@ static void system_clock_200m_25m_hxtal(void)
     PMU_CTL |= PMU_CTL_HDS;
     while(0U == (PMU_CS & PMU_CS_HDSRF)){
     } 
+#endif /* CHIP_APM32F407 */
     
     /* select PLL as system clock */
     RCU_CFG0 &= ~RCU_CFG0_SCS;
