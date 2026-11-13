@@ -80,7 +80,7 @@
  * el SCB->VTOR- los vigila tools/mapa.py, y por eso la variante lleva su
  * propio .ld en vez de parchear el de siempre.
  */
-#ifdef CHIP_F470VG
+#if defined(CHIP_F470VG) || defined(CHIP_APM32F407)   /* 1 MB de flash */
 #define CARGA_BORRA_HASTA   0x08100000UL    /* 1024 kB: GD32F470VGT6 */
 #else
 #define CARGA_BORRA_HASTA   0x08080000UL    /*  512 kB: GD32F450VET6 */

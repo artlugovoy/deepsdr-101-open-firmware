@@ -248,7 +248,7 @@ OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.S=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
 vpath %.S $(sort $(dir $(ASM_SOURCES)))
 
-.PHONY: all clean flash erase update470 dos comprueba comprueba-fw
+.PHONY: all clean flash erase update470 apm32 dos comprueba comprueba-fw
 
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 	$(SIZE) $(BUILD_DIR)/$(TARGET).elf
@@ -310,7 +310,7 @@ $(BUILD_DIR):
 # copian al disco de la radio y los que van al repositorio (ver .gitignore).
 # Un "clean" que se lleva el update.bin que ibas a grabar no es limpiar.
 clean:
-	rm -rf build build_470 $(BUILD_DIR)
+	rm -rf build build_470 build_apm32 $(BUILD_DIR)
 
 # --- Programming with ST-Link + OpenOCD ---
 # We use our own target/gd32f450.cfg (in openocd/) instead of the
@@ -424,6 +424,23 @@ update470:
 # cmp final de update470 leeria un update.bin que el otro esta escribiendo,
 # y el veredicto "identico/distinto" saldria al azar.
 #
+#
+# EL APM32F407VGT6 - 13/11/2026 (rama apm32).
+#
+# Mismo mecanismo que update470: otro .ld (128 kB de SRAM, ver su cabecera)
+# y CHIP_APM32F407. Ver docs/superpowers/specs/2026-11-13-apm32-port-design.md.
+#
+#   make apm32   ->  update_apm32.bin
+#
+.PHONY: apm32
+apm32:
+	@$(MAKE) BUILD_DIR=build_apm32 TARGET=firmware_apm32 \
+	         LDSCRIPT=APM32F407VG_FLASH.ld DEFS_EXTRA=-DCHIP_APM32F407
+	@python3 tools/cabecera.py build_apm32/firmware_apm32.bin update_apm32.bin \
+	         --tope=1015808 --clave=" APM32"
+	@python3 tools/comprueba_update.py update_apm32.bin
+	@python3 tools/ram_mapa.py build_apm32/firmware_apm32.map
+
 .PHONY: dos
 dos:
 	@$(MAKE) update

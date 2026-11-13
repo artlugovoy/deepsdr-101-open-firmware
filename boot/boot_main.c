@@ -260,6 +260,8 @@ static void borra_linea(uint16_t y)
 #ifndef CARGADOR_VARIANTE
 #ifdef CHIP_F470VG
 #define CARGADOR_VARIANTE " 470"
+#elif defined(CHIP_APM32F407)
+#define CARGADOR_VARIANTE " APM32"
 #else
 #define CARGADOR_VARIANTE ""
 #endif
@@ -452,7 +454,7 @@ static uint8_t fmc_borra(uint32_t addr)
      *    7 otra vez, en silencio.
      */
     if (addr >= tope_de_borrado()) { return 0U; }
-#ifdef CHIP_F470VG
+#if defined(CHIP_F470VG) || defined(CHIP_APM32F407)   /* 1 MB de flash */
     /*
      * LOS CUATRO SECTORES DE ARRIBA, Y SIN ELLOS LA VARIANTE ES PEOR QUE
      * NO HACERLA.

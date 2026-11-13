@@ -107,8 +107,31 @@ customboot_470.bin: customboot_470.elf
 	@python3 ../tools/bootsello.py customboot_470.bin boot_main.c \
 	         customboot_470.map " 470"
 
+#
+# EL CARGADOR DEL APM32F407VGT6 - 13/11/2026 (rama apm32).
+#
+# Mismo codigo con CHIP_APM32F407 (1 MB de flash, como el 470) y su propio
+# .ld: 128 kB de SRAM, pila en 0x2001F000.
+#
+#   make -C boot apm32   ->  boot/customboot_apm32.bin
+#
+.PHONY: apm32
+apm32: customboot_apm32.bin
+
+customboot_apm32.elf: $(SRC) $(ASM) $(HDR) APM32F407VG_BOOT.ld reglas.mk
+	$(CC) $(CFLAGS) -DCHIP_APM32F407 \
+	      $(subst GD32F450VE_BOOT.ld,APM32F407VG_BOOT.ld,$(LDFLAGS)) \
+	      -Wl,-Map=$(@:.elf=.map) $(SRC) $(ASM) -o $@
+	arm-none-eabi-size $@
+
+customboot_apm32.bin: customboot_apm32.elf
+	$(OBJCOPY) -O binary $< $@
+	@python3 ../tools/bootsello.py customboot_apm32.bin boot_main.c \
+	         customboot_apm32.map " APM32"
+
 clean: ; rm -f customboot.elf customboot.bin customboot.map \
-                customboot_470.elf customboot_470.bin customboot_470.map
+                customboot_470.elf customboot_470.bin customboot_470.map \
+                customboot_apm32.elf customboot_apm32.bin customboot_apm32.map
 
 # ---------------------------------------------------------------------
 # LOS CARGADORES DE PRUEBA DE LAS TRES RAMAS DEL PANEL - 29/10/2026.

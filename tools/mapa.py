@@ -230,8 +230,10 @@ def main():
                  'arregla este guion.' % len(topes))
     tope_470, tope_450 = int(topes[0], 16), int(topes[1], 16)
 
+    # APM32F407VGT6 (rama apm32, 13/11/2026): 1 MB como el 470, mismo tope.
     for ld, tope, nombre in (('GD32F450VE_FLASH.ld', tope_450, '450VET6'),
-                             ('GD32F470VG_FLASH.ld', tope_470, '470VGT6')):
+                             ('GD32F470VG_FLASH.ld', tope_470, '470VGT6'),
+                             ('APM32F407VG_FLASH.ld', tope_470, 'APM32F407')):
         txt = lee(ld)
         m = re.search(r'FLASH\s*\(rx\)\s*:\s*ORIGIN\s*=\s*0x([0-9A-Fa-f]+),'
                       r'\s*LENGTH\s*=\s*(\d+)', txt)
