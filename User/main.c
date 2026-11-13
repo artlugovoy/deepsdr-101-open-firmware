@@ -18786,6 +18786,9 @@ static const char *info_valor(uint8_t id, char *buf, char *pie)
 #ifdef CHIP_F470VG
         buf[i++] = '4'; buf[i++] = '7'; buf[i++] = '0';
         if (kb < 1024UL) { buf[i++] = '!'; }   /* no cabe: binario que no es */
+#elif defined(CHIP_APM32F407)
+        buf[i++] = 'A'; buf[i++] = 'P'; buf[i++] = 'M';
+        if (kb < 1024UL) { buf[i++] = '!'; }   /* no cabe: binario que no es */
 #else
         buf[i++] = '4'; buf[i++] = '5'; buf[i++] = '0';
 #endif

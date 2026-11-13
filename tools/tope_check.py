@@ -64,8 +64,11 @@ def fin_de_la_tabla():
         sys.exit('tope_check: no encuentro k_sectores[] en %s' % CARGADOR_C)
     cuerpo = m.group(1)
     comun, extra = cuerpo, ''
-    if '#ifdef CHIP_F470VG' in cuerpo:
-        comun, extra = cuerpo.split('#ifdef CHIP_F470VG', 1)
+    # La guarda de "chip de 1 MB": '#ifdef CHIP_F470VG' o, desde la rama
+    # apm32 (13/11/2026), '#if defined(CHIP_F470VG) || defined(CHIP_APM32F407)'.
+    g = re.search(r'#if(?:def\s+CHIP_F470VG|\s+defined\(CHIP_F470VG\)[^\n]*)', cuerpo)
+    if g:
+        comun, extra = cuerpo[:g.start()], cuerpo[g.end():]
         extra = extra.split('#endif', 1)[0]
     dirs450 = [int(x, 16) for x in re.findall(r'(0x[0-9A-Fa-f]+)UL', comun)]
     dirs470 = dirs450 + [int(x, 16) for x in re.findall(r'(0x[0-9A-Fa-f]+)UL', extra)]
