@@ -119,7 +119,20 @@ void waterfall_push_line(const uint8_t *line)
     /* Retrocede el head (la fila que era la mas antigua pasa a ser la
      * nueva fila 0) y escribe encima. Solo 1 fila copiada. */
     s_head = (uint16_t)((s_head + WATERFALL_ROWS - 1U) % WATERFALL_ROWS);
+#ifdef CHIP_APM32F407
+    /* Media anchura: de cada pareja, el indice mayor (ver waterfall.h). */
+    {
+        uint16_t c;
+        uint8_t *d = &s_buf[s_head][0];
+
+        for (c = 0U; c < (uint16_t)WF_COLS; c++) {
+            uint8_t a = line[2U * c], b = line[2U * c + 1U];
+            d[c] = (a > b) ? a : b;
+        }
+    }
+#else
     memcpy(&s_buf[s_head][0], line, WATERFALL_WIDTH);
+#endif
     if (s_pend < (uint8_t)WATERFALL_ROWS) { s_pend++; }
 }
 
@@ -141,6 +154,7 @@ void waterfall_push_line(const uint8_t *line)
  * Devuelve 0 si el IPA no pudo con alguna tira. En ese caso NO se ha
  * escrito nada en el panel todavia -la comprobacion se hace antes de abrir
  * ninguna ventana- y el que llama repite por el camino de siempre. */
+#ifndef CHIP_APM32F407   /* APM32: sin IPA, y el buffer es de media anchura */
 static uint8_t wf_blit_ipa(uint16_t x, uint16_t y, const uint16_t *lut)
 {
     /* Dos medias bandas, por lo mismo que en spectrum.c: el IPA convierte
@@ -203,6 +217,7 @@ static uint8_t wf_blit_ipa(uint16_t x, uint16_t y, const uint16_t *lut)
     gfx2_banda_suelta();
     return 1U;
 }
+#endif
 
 /*
  * LA CASCADA DENTRO DE UNA BANDA QUE TRAE OTRO - 05/10/2026.
@@ -240,9 +255,17 @@ void waterfall_pinta_en(gfx2_surf_t *sf, int16_t px, int16_t py,
 
         if (dy < 0 || dy >= sf->h) { continue; }
         dst = &sf->px[(int32_t)dy * sf->w + dx];
+#ifdef CHIP_APM32F407
+        for (c = 0U; c < (uint16_t)WF_COLS; c++) {
+            uint16_t v = lut[src[c]];
+            dst[2U * c] = v;
+            dst[2U * c + 1U] = v;
+        }
+#else
         for (c = 0U; c < (uint16_t)WATERFALL_WIDTH; c++) {
             dst[c] = lut[src[c]];
         }
+#endif
     }
 }
 
@@ -338,8 +361,14 @@ void waterfall_blit(uint16_t x, uint16_t y, const uint16_t *lut)
         uint8_t k;
         for (k = 0U; k < s_pend; k++) {
             uint16_t f = (uint16_t)((s_head + k) % WATERFALL_ROWS);
+#ifdef CHIP_APM32F407
+            /* Media anchura: la fila guardada son WF_COLS indices. */
+            gfx2_wf_fila_x2((int16_t)x, (int16_t)(y + f), WF_COLS,
+                            &s_buf[f][0], lut);
+#else
             gfx2_wf_fila((int16_t)x, (int16_t)(y + f), WATERFALL_WIDTH,
                          &s_buf[f][0], lut);
+#endif
         }
         s_pend = 0U;
         return;
@@ -355,6 +384,11 @@ void waterfall_blit(uint16_t x, uint16_t y, const uint16_t *lut)
      * Desde el 24/09/2026 hay ademas un camino por IPA. Se intenta ese
      * primero y, si no puede, se cae al de siempre - que no es un apano:
      * es el que hay que poder comparar contra el otro sin recompilar. */
+#ifdef CHIP_APM32F407
+    /* Media anchura: cada columna guardada sale 2 px de ancho. */
+    gfx2_wf_blit_x2((int16_t)x, (int16_t)y, WF_COLS, WATERFALL_ROWS,
+                    &s_buf[0][0], WF_COLS, (int16_t)s_head, lut);
+#else
     if (ipa_blit_hay()) {
         if (wf_blit_ipa(x, y, lut)) {
             return;
@@ -362,6 +396,7 @@ void waterfall_blit(uint16_t x, uint16_t y, const uint16_t *lut)
     }
     gfx2_wf_blit((int16_t)x, (int16_t)y, WATERFALL_WIDTH, WATERFALL_ROWS,
                  &s_buf[0][0], WATERFALL_WIDTH, (int16_t)s_head, lut);
+#endif
 }
 
 uint8_t *waterfall_row(uint16_t row)
