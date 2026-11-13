@@ -62,6 +62,11 @@ void ipa_blit_init(void)
 {
     s_on = 0U; s_vale = 0U; s_lut_cargada = 0U; s_fallos = 0U;
     s_lut_ptr = 0; s_lut_salta = 0U;
+#ifdef CHIP_APM32F407
+    /* El APM32F407 no tiene IPA: en su direccion no hay nada y leerla
+     * puede dar un BusFault. Se queda apagado y dibuja el camino software. */
+    return;
+#endif
 
     rcu_periph_clock_enable(RCU_IPA);
     ipa_deinit();

@@ -69,6 +69,13 @@ _Static_assert(((12288000UL / 8UL) * PLLSAI_N) >= 100000000UL
 
 uint8_t usb_cdc_hw_reloj(void)
 {
+#ifdef CHIP_APM32F407
+    /* El APM32F407 no tiene PLLSAI ni selector de 48 MHz: el USB sale
+     * siempre del Q del PLL principal, que SystemInit() ya pone a 48,128
+     * MHz (8/188/.../Q=6, el reloj de fabrica de esta radio). */
+    rcu_periph_clock_enable(RCU_USBFS);
+    return 1U;
+#else
     uint32_t guard = 500000UL;
 
     /* PLLSAIP a 4, PLLSAIN a 125. Los campos Q y R no los usa nadie aqui;
@@ -96,6 +103,7 @@ uint8_t usb_cdc_hw_reloj(void)
     rcu_ck48m_clock_config(RCU_CK48MSRC_PLL48M);
     rcu_periph_clock_enable(RCU_USBFS);
     return 1U;
+#endif /* CHIP_APM32F407 */
 }
 
 void usb_gpio_config(void)

@@ -62,8 +62,12 @@ static void hw_delay(uint32_t ntime, uint8_t unit);
 void usb_rcu_config(void)
 {
 #ifdef USE_USB_FS
+#ifndef CHIP_APM32F407
+    /* En el APM32F407 este selector (RCU_ADDCTL, +0xC0) no existe: el USB
+     * sale siempre del Q del PLL principal (rama apm32, 13/11/2026). */
     rcu_pll48m_clock_config(RCU_PLL48MSRC_PLLQ);
     rcu_ck48m_clock_config(RCU_CK48MSRC_PLL48M);
+#endif
 
     rcu_periph_clock_enable(RCU_USBFS);
 #elif defined(USE_USB_HS)
