@@ -1207,3 +1207,53 @@ void gfx2_wf_blit(int16_t x, int16_t y, int16_t w, int16_t rows,
     }
     gfx2_banda_suelta();
 }
+
+#ifdef CHIP_APM32F407
+/* LA CASCADA A MEDIA ANCHURA - 14/11/2026 (rama apm32).
+ * Copia de gfx2_wf_blit() con una sola diferencia: cada indice se escribe en
+ * DOS pixeles seguidos, asi que en pantalla mide 2*w. Pide la banda igual
+ * que la otra (ver alli por que). */
+void gfx2_wf_blit_x2(int16_t x, int16_t y, int16_t w, int16_t rows,
+                     const uint8_t *idx, int16_t stride, int16_t head,
+                     const uint16_t *cmap)
+{
+    int16_t done = 0;
+    int16_t w2 = (int16_t)(2 * w);
+
+    if (gfx2_banda_coge() == (uint16_t *)0) {
+        return;
+    }
+
+    while (done < rows) {
+        int16_t chunk = (int16_t)(rows - done);
+        int16_t r, i;
+        int32_t n;
+
+        if (chunk > GFX2_BAND_H) chunk = GFX2_BAND_H;
+
+        for (r = 0; r < chunk; r++) {
+            int16_t src = (int16_t)((head + done + r) % rows);
+            const uint8_t *sp = &idx[(int32_t)src * stride];
+            uint16_t *dp = &s_band[(int32_t)r * w2];
+            for (i = 0; i < w; i++) {
+                uint16_t v = cmap[sp[i]];
+                dp[2 * i] = v;
+                dp[2 * i + 1] = v;
+            }
+        }
+
+        if (s_chivato) {
+            s_chivato((uint16_t)x, (uint16_t)(y + done),
+                      (uint16_t)(x + w2 - 1),
+                      (uint16_t)(y + done + chunk - 1));
+        }
+        rm68120_set_window((uint16_t)x, (uint16_t)(y + done),
+                           (uint16_t)(x + w2 - 1), (uint16_t)(y + done + chunk - 1));
+        n = (int32_t)w2 * chunk;
+        for (i = 0; i < n; i++) rm68120_dato(s_band[i]);
+
+        done = (int16_t)(done + chunk);
+    }
+    gfx2_banda_suelta();
+}
+#endif

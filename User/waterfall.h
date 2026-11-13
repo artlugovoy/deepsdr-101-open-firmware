@@ -69,7 +69,14 @@
  * para que quepa en 128 kB de SRAM (con 40 sobraban 9,4 kB y lo demas ya
  * era trabajo de verdad). El hueco de pantalla sigue siendo el de siempre
  * (WF_AREA_H): la cascada pinta arriba y lo de debajo queda negro. */
-#define WATERFALL_ROWS   30
+#define WATERFALL_ROWS   60
+/* Y a MEDIA ANCHURA (14/11/2026, eleccion del usuario tras H2): 378 columnas
+ * guardadas, cada una pintada 2 px de ancho. 60 x 378 = 22.680 B, lo mismo
+ * que costaban las 30 filas enteras: el doble de historia sin pedir RAM. La
+ * FFT solo da 512 puntos para los 756 px, asi que la perdida es pequena.
+ * Al guardar, de cada pareja de pixeles se queda el MAYOR indice (la señal
+ * mas fuerte), para que una portadora estrecha no se apague. */
+#define WF_COLS          (WATERFALL_WIDTH / 2)
 #else
 #define WATERFALL_ROWS   72    /* filas visibles simultaneamente, ver presupuesto de RAM arriba
                                   (756*72*1 = 54.432 B: un byte por pixel, indice de paleta.
@@ -81,6 +88,10 @@
  * panel de texto de RTTY y el de FAX. En el GD32 coincide con WATERFALL_ROWS;
  * en el APM32 la historia es mas corta pero la maqueta no se mueve. */
 #define WF_AREA_H        72
+/* Columnas GUARDADAS por fila (en pantalla siempre son WATERFALL_WIDTH). */
+#ifndef WF_COLS
+#define WF_COLS          WATERFALL_WIDTH
+#endif
 
 /* Reserva el buffer (en .bss, RAM principal) y lo pone a negro. Llamar
  * una vez al arrancar, antes del primer waterfall_push_line(). */

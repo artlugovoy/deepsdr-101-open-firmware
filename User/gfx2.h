@@ -388,4 +388,13 @@ void gfx2_wf_blit(int16_t x, int16_t y, int16_t w, int16_t rows,
                   const uint8_t *idx, int16_t stride, int16_t head,
                   const uint16_t *cmap);
 
+#ifdef CHIP_APM32F407
+/* Igual que gfx2_wf_blit(), pero cada indice sale DOS pixeles de ancho: w es
+ * el ancho guardado y en pantalla ocupa 2*w. La cascada del APM32 guarda
+ * media anchura (ver WF_COLS en waterfall.h). */
+void gfx2_wf_blit_x2(int16_t x, int16_t y, int16_t w, int16_t rows,
+                     const uint8_t *idx, int16_t stride, int16_t head,
+                     const uint16_t *cmap);
+#endif
+
 #endif /* GFX2_H_INCLUDED */
