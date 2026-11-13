@@ -272,7 +272,8 @@ CALIENTES += ft8_decoder.o ft8_fft.o ft8_decimator.o \
 #
 # Anadir prerequisitos a una regla que ya existe es legal mientras no se le
 # anada una segunda receta, que es justo lo que hacemos aqui.
-FT8_OBJETOS = $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.c,%.o,$(wildcard Ft8Lib/ft8/*.c))))
+# APM32 (rama apm32, 13/11/2026): sin FT8 en su build, vacia (ver reglas.mk).
+FT8_OBJETOS = $(if $(findstring CHIP_APM32F407,$(DEFS_EXTRA)),,$(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.c,%.o,$(wildcard Ft8Lib/ft8/*.c)))))
 $(BUILD_DIR)/$(TARGET).elf: $(FT8_OBJETOS)
 
 # La regla de los calientes va AQUI, al final, y por el mismo motivo: la lista

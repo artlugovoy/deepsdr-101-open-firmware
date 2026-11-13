@@ -81,9 +81,23 @@ uint8_t *hfdl_scope_get_hfdl_ram(uint32_t *capacity_out)
  * LA RED DE LA QUE HABLA hfdl_scope_get_hfdl_ram(): la union no puede
  * encoger por debajo de lo que HFDL necesita. Hoy sobran 3.596 bytes.
  */
+#ifdef CHIP_APM32F407
+/*
+ * EN EL APM32 LA UNION ES SOLO LA CASCADA - 13/11/2026 (rama apm32).
+ * HFDL, FT8 y los otros tres grandes no estan en su build (reglas.mk), asi
+ * que lo que se presta es la cascada de 40 filas. Los que si lo piden y su
+ * tamaño, medidos del DWARF de build_apm32 el 13/11/2026:
+ */
+_Static_assert(sizeof(g_ft8_shared_ram) == 40U * WATERFALL_WIDTH,
+               "APM32: la union tiene que ser la cascada de 40 filas");
+_Static_assert(sizeof(g_ft8_shared_ram) >= 13144U, "APM32: no cabe el sal_t de SSTV");
+_Static_assert(sizeof(g_ft8_shared_ram) >= 6048U,  "APM32: no cabe el anillo de WEFAX");
+_Static_assert(sizeof(g_ft8_shared_ram) >= 3508U,  "APM32: no cabe el estado de DSC");
+#else
 _Static_assert(sizeof(g_ft8_shared_ram) >= HFDL_RAM_TOTAL,
                "la union se ha quedado por debajo de lo que pide HFDL: "
                "mira HFDL_RAM_TOTAL en hfdl_ram.h");
+#endif
 
 uint8_t *hfdl_ram_cabecera(void)
 {

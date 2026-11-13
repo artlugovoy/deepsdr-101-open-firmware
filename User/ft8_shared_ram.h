@@ -86,6 +86,15 @@
  * esta al dia; este bloque decia "corregir" aquellos numeros y llevaba una
  * semana corrigiendolos hacia atras.
  */
+#ifdef CHIP_APM32F407
+/* APM32 (rama apm32, 13/11/2026): FT8 y HFDL no estan en su build, asi que
+ * la union es solo la cascada: 40 x 756 = 30.240 bytes. Lo que se presta
+ * por hfdl_ram_todo() a SSTV, WEFAX, AIS... es esto; ver hfdl_ram.c. */
+typedef union
+{
+    uint8_t waterfall_buf[WATERFALL_ROWS][WATERFALL_WIDTH];
+} ft8_shared_ram_t;
+#else
 typedef union
 {
     uint8_t waterfall_buf[WATERFALL_ROWS][WATERFALL_WIDTH];
@@ -254,6 +263,7 @@ typedef union
         char    lineas[48][88];      /* s_lin         - ft8_modo.c */
     } ft8;
 } ft8_shared_ram_t;
+#endif /* CHIP_APM32F407 */
 
 /*
  * QUIEN SOSTIENE EL SELLO. 25/09/2026.

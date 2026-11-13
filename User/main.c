@@ -8694,7 +8694,7 @@ static void badges_draw(void)
 #define MENU_AREA_X 0
 #define MENU_AREA_W MAIN_W
 #define MENU_AREA_Y SPEC_Y
-#define MENU_AREA_H (uint16_t)(WF_PANEL_Y + WATERFALL_ROWS + 4U - SPEC_Y) /* 346+72+4-104=318 - was 358 before the status-strip redesign (SPEC_Y grew from 64 to 104) */
+#define MENU_AREA_H (uint16_t)(WF_PANEL_Y + WF_AREA_H + 4U - SPEC_Y) /* 346+72+4-104=318 - was 358 before the status-strip redesign (SPEC_Y grew from 64 to 104) */
 
 /* *** 01/09/2026, RECOMPUTED for the status-strip redesign - real bug
  * fix, per the project owner *** - MENU_TILE_W/H used to be sized
@@ -26414,7 +26414,7 @@ static void rf_agc_poll(void)
  * Los tres numeros salen de ui_digi.h, que es quien dibuja: asi el alto que
  * reserva main.c no puede quedarse desfasado del que usa el modulo. */
 #define RTTY_TEXT_PANEL_H  (uint16_t)(UDG_HDR_H + UDG_ROWS * UDG_LINE_H)
-#define RTTY_TEXT_PANEL_Y  (uint16_t)((WF_PANEL_Y + WATERFALL_ROWS + 4U) - RTTY_TEXT_PANEL_H)
+#define RTTY_TEXT_PANEL_Y  (uint16_t)((WF_PANEL_Y + WF_AREA_H + 4U) - RTTY_TEXT_PANEL_H)
 /*
  * EL PANEL DE FT8 SE QUEDA CON TODO - 25/09/2026.
  *
@@ -30376,7 +30376,7 @@ static void rtty_poll(void)
 #define FAX_ANCHO  WEFAX_ANCHO
 #define FAX_HDR_H  UDG_HDR_H
 #define FAX_Y      (uint16_t)(SPEC_Y + FAX_HDR_H)
-#define FAX_ALTO   (uint16_t)((WF_PANEL_Y + WATERFALL_ROWS + 4U) - FAX_Y)
+#define FAX_ALTO   (uint16_t)((WF_PANEL_Y + WF_AREA_H + 4U) - FAX_Y)
 
 static uint16_t s_fax_fila;
 static uint8_t  s_fax_limpio;
@@ -36316,7 +36316,7 @@ static void radio_screen_draw(void)
 
     /* Sin borde, misma razon que s_spectrum_panel justo arriba. */
     s_waterfall_panel = (ui_panel_t){0, WF_PANEL_Y, MAIN_W,
-                                      (uint16_t)(WATERFALL_ROWS + 4), GFX_COLOR_BLACK, GFX_COLOR_BLACK};
+                                      (uint16_t)(WF_AREA_H + 4), GFX_COLOR_BLACK, GFX_COLOR_BLACK};
 
     /* Status strip (S-meter + SNR + badges drawn on top afterwards) -
      * replaces the old right-hand column panel (s_rcol_panel, removed
