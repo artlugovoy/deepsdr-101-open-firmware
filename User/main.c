@@ -2446,6 +2446,9 @@ int main(void)
 
     debug_print("\n--- AIC3204: phase 2 (clock + single-ended ADC baseline + power-up) ---\n");
     aic3204_phase2_init(s_current_rate);
+#ifdef CHIP_APM32F407
+    gd32_i2s_enable_sync();   /* el reloj ya corre: ver gd32_i2s.c */
+#endif
 
 #if AIC3204_SINGLE_ENDED_TEST
     /* Bench test ONLY - see AIC3204_SINGLE_ENDED_TEST's and
@@ -2558,6 +2561,22 @@ int main(void)
      * cierra eso y no cuesta nada: en el arranque se pasa por aqui una
      * vez.
      */
+#ifdef CHIP_APM32F407
+    /*
+     * EN EL APM32, EL ARRANQUE PASA POR EL REINICIO COMPLETO - 14/11/2026
+     * (rama apm32, prueba H2).
+     *
+     * En frio la tasa guardada y la actual coinciden, asi que este
+     * apply_demod_mode() se salta el bloque del cambio de tasa (ver el
+     * comentario del 13/10/2026 dentro de el). La captura se queda con lo
+     * que dejo aic3204_phase2_init(), que enciende el reloj y DESPUES
+     * reprograma el codec. En el APM32 eso deja la captura descolocada:
+     * SOBRECARGA sin antena, espectro plano y siseo, que se curan al pasar
+     * por WFM y volver. Una tasa imposible obliga a pasar por el camino del
+     * cambio en vivo, que para, arma y solo entonces da reloj.
+     */
+    s_current_rate = (aic3204_rate_t)0xFFU;
+#endif
     apply_demod_mode(s_loaded_settings.have_mode ? s_loaded_settings.mode
                                                  : demod_am_get_mode());
     if (s_loaded_settings.have_audio_bw) {
@@ -11306,6 +11325,9 @@ static void apply_demod_mode(demod_mode_t mode)
          *    already listening, so this is the first real edge it
          *    sees. */
         aic3204_start_bclk_wclk(rate);
+#ifdef CHIP_APM32F407
+        gd32_i2s_enable_sync();   /* errata del I2S esclavo: ver gd32_i2s.c */
+#endif
 
         /* 7. ADC/DAC power up - both DMA channels already armed and
          *    waiting, so nothing overruns. */
