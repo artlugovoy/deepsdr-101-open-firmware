@@ -69,6 +69,12 @@ void gd32_i2s_init_slave_192k(void);
  * FERR-free after a rate change, cold boot or live.
  */
 void gd32_i2s_init_slave(aic3204_rate_t rate);
+#ifdef CHIP_APM32F407
+/* APM32: habilita el I2S esclavo en un flanco de subida de WS (errata
+ * STM32F4). Llamar con BCLK/WCLK ya corriendo. Ver gd32_i2s.c. */
+void     gd32_i2s_enable_sync(void);
+uint32_t gd32_i2s_ws_sin_flanco(void);   /* veces que WS no se movio */
+#endif
 
 /*
  * Diagnostic utility: toggles the five I2S pins as plain GPIO (no I2S

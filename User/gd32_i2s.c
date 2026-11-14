@@ -326,8 +326,13 @@ void gd32_i2s_init_slave(aic3204_rate_t rate)
         gpio_af_set(GPIOB, GPIO_AF_6, GPIO_PIN_14);
     }
 
+#ifdef CHIP_APM32F407
+    /* APM32: NO se habilita aqui, con el reloj parado. Lo hace
+     * gd32_i2s_enable_sync() cuando BCLK/WCLK ya corren. Ver alli. */
+#else
     i2s_enable(SPI1);
     i2s_enable(I2S1_ADD);
+#endif
 
     debug_print_hex32("gd32_i2s: SPI_I2SCTL after i2s_enable (SPI1, bit10=I2SEN should be 1)",
                        SPI_I2SCTL(SPI1));
@@ -1339,3 +1344,47 @@ void gd32_i2s_dma_start_test_tone(void)
         }
     }
 }
+
+#ifdef CHIP_APM32F407
+/*
+ * HABILITAR EL I2S ESCLAVO CON WS ARRIBA - 14/11/2026 (rama apm32, H2).
+ *
+ * El APM32F407 es copia del STM32F407 y arrastra su errata (ST ES0206
+ * 2.12.6 y hermanas): "In I2S Slave mode, the WS level must be set by the
+ * external master when enabling the I2S". En formato I2S (Philips) hay que
+ * habilitarlo con WS ALTO. Si se habilita con WS bajo y el reloj corriendo,
+ * el esclavo arranca a mitad de trama y se queda descolocado toda la
+ * sesion: muestras basura, SOBRECARGA sin antena, espectro plano, siseo.
+ * Al azar, segun en que nivel pille a WS, y por eso fallaba "a veces" al
+ * volver de FM. El GD32 no tiene esa errata.
+ *
+ * Asi que: con el codec ya dando BCLK/WCLK, se espera un flanco de subida
+ * de WS (PB12) y se habilitan los dos bloques en esa misma media trama, con
+ * las interrupciones cortadas para no llegar tarde. Con tope de vueltas: si
+ * WS no se mueve (codec sin reloj), se habilita igual -lo de antes- y se
+ * cuenta.
+ */
+static volatile uint32_t s_ws_sin_flanco = 0U;
+
+uint32_t gd32_i2s_ws_sin_flanco(void) { return s_ws_sin_flanco; }
+
+void gd32_i2s_enable_sync(void)
+{
+    const uint32_t ws = GPIO_PIN_12;
+    uint32_t n = 2000000UL;   /* decenas de ms a 144 MHz; WS va a >= 48 kHz */
+    uint32_t prim;
+
+    if ((SPI_I2SCTL(SPI1) & SPI_I2SCTL_I2SEN) != 0U) {
+        i2s_disable(I2S1_ADD);
+        i2s_disable(SPI1);
+    }
+    prim = __get_PRIMASK();
+    __disable_irq();
+    while (((GPIO_ISTAT(GPIOB) & ws) != 0U) && (n != 0U)) { n--; }   /* a bajo */
+    while (((GPIO_ISTAT(GPIOB) & ws) == 0U) && (n != 0U)) { n--; }   /* sube   */
+    i2s_enable(SPI1);
+    i2s_enable(I2S1_ADD);
+    if (prim == 0U) { __enable_irq(); }
+    if (n == 0U) { s_ws_sin_flanco++; }
+}
+#endif
