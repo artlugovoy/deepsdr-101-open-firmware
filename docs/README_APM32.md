@@ -36,7 +36,7 @@ The APM32 has 128 KB of main RAM (the GD32F450 has 192 KB) and runs at
 | **Firmware updates from the USB disk** | **not supported yet** — install with DFU only (below) |
 | **Info screen** | SRAM / flash limits still show GD32 values (cosmetic) |
 
-## Status (tested on one radio, 2026-11-13/14)
+## Status (tested on one radio, 2026-11-13/14, V6.72 build)
 
 | Check | Result |
 |---|---|
@@ -44,11 +44,20 @@ The APM32 has 128 KB of main RAM (the GD32F450 has 192 KB) and runs at
 | Main screen, touch, knob tuning, spectrum + waterfall | ✅ |
 | AM and FM audio | ✅ |
 | Settings kept across power cycles | ✅ |
+| No false OVERLOAD / garbled input after power-on or AM↔WFM switching (3 power cycles, ~10 round trips, no antenna) | ✅ |
 | Decoders (RDS, SSTV, …), USB serial port, selecting a removed mode | not yet checked |
-| Once, right after the very first flash: constant hiss and a frozen waterfall; fine after that. Cause unknown. If you see it, open Info and note **Audio load** / **Audio health** before power-cycling, and please open an issue. | ⚠ |
 
-A red **OVERLOAD** badge with a flat, station-less spectrum means the antenna
-gives the receiver too much signal: press **ATT**.
+**Fixed in this build — the APM32's I2S erratum.** The APM32F407 copies a
+documented STM32F4 flaw: the I2S receiver must be switched on while the
+frame-sync line (WS) is high, otherwise it starts mid-sample and stays
+misaligned. Symptoms were OVERLOAD with no antenna, a flat spectrum with no
+stations, and constant hiss — at random after power-on or after switching back
+from WFM. This build waits for a WS rising edge before enabling the receiver.
+If you still see those symptoms, open Info, note **Audio load** /
+**Audio health** before power-cycling, and please open an issue.
+
+A red **OVERLOAD** badge with a strong antenna on a busy band is genuine: press
+**ATT**.
 
 ## Installing (Linux / macOS, `dfu-util`)
 
